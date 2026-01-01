@@ -7,7 +7,6 @@ The format is quite simple if you want to add new quotes or edit existing ones
 * 24h time|time reference|literary quote with time reference inside it|Book Title|Author
 
 Written as an example
-
 * 16:15|quarter past four|At a quarter past four he stumbled home drunk|Foo-Book Title|Bar-Author
 
 ## Using the script
@@ -26,3 +25,12 @@ If you only want to generate x images (say, for testing how a font or a quote lo
 Thanks to [tjaap](https://www.instructables.com/Literary-Clock-Made-From-E-reader/) for creating the original version of this script in PHP.
 
 [^1]: Python is preinstalled on virtually every Linux distribution and MacOS, in which case you only need to install Pillow.
+
+## Darryl's Updates
+
+* CSV is sourced from JohanneseNE/literature-clock.  This CSV is missing header, but has extra "safe" field to ide    ntify sfw/nsfw quotes. Quotes are in Unicode, and include <br>s, so made some adjustments for that. There are a fe    w quotes that are not parsing properly. Couldn't figure out problem.  I'll try to identify those separately.
+* I was generating images for a Kindle Paperwhite 2 which has a higher resolution than earlier Kindles, so I had t    o adjust imgsize and various numbers for the quote to image conversion.
+* I'm displaying the Kindle upside-down for easier charging, so have to flip images 180 degrees.
+* Future enhancements: 
+    * use file directly without having to add header
+    * add flags to generate sfw, nsfw-only (ha) quotes, etc.
