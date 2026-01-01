@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # -*- coding: utf-8 -*-
 from sys import argv, exit
 from os import path
@@ -9,34 +11,66 @@ except ModuleNotFoundError:
     exit(1)
 
 # options (these are constants)
-csvpath = 'litclock_annotated_br2.csv'      # csv file to read quotes from
+# csvpath = 'litclock_annotated_br2.csv'      # csv file to read quotes from
+
+csvpath = 'litclock-sfw.csv'      
+
+# This CSV is based on litclock_annotated.csv from https://github.com/JohannesNE/literature-clock from a few years ago.
+# It adds this header:
+# time|timestring|quote|title|author|safe
+
+# Because JohannesNE's data is intended for web use, I replace all <br> variants with newlines, but those are sadly ignored
+
+# Had to remove a few problematic quotes that couldn't be parsed, and I grepped to only include SFW quotes. 
+
+# Future enhancements: use file directly without having to add header, add flags to generate sfw, nsfw-only (ha) quotes, etc.
+
+
 imgdir = 'images/'                          # save location for images
 imgformat = 'png'                           # format. jpeg is faster but lossy
 include_metadata = True                     # whether to include author/title
-imgsize = (600,800)                         # width/height of image
 color_bg = 255                              # white. color for the background
 color_norm = 125                            # grey. color for normal text
 color_high = 0                              # black. color for highlighted text
 fntname_norm = 'bookerly.ttf'               # font for normal text
 fntname_high = 'bookerlybold.ttf'           # font for highlighted text
 fntname_mdata = 'baskervilleboldbt.ttf'     # font for the author/title
-fntsize_mdata = 25                          # fontsize for the author/title
-# don't touch
+
+# Paperwhite 2 (1024x758)
+imgsize = (758,1024)                        # width/height of image
+fntsize_mdata = 32                          # fontsize for the author/title
+
+# All Kindles prior to Paperwhite 2 (2012)
+# imgsize = (600,800)                         # width/height of image
+# fntsize_mdata = 25                          # fontsize for the author/title
+
 imgnumber = 0
 previoustime = ''
 
 
 def TurnQuoteIntoImage(index:int, time:str, quote:str, timestring:str,
-                                               author:str, title:str):
+                                               author:str, title:str, safe:str):
     global imgnumber, previoustime
     savepath = imgdir
-    quoteheight = 720
-    quotelength = 570
+
+# Paperwhite 2 (1024x758)
+    quoteheight = 922
+    quotelength = 730
     quotestart_y = 0
-    quotestart_x = 20
-    mdatalength = 450
-    mdatastart_y = 785
-    mdatastart_x = 585
+    quotestart_x = 26
+    mdatalength = 476
+    mdatastart_y = 1005
+    mdatastart_x = 749
+
+# All Kindles prior to Paperwhite 2 (2012)
+#     quoteheight = 720
+#     quotelength = 570
+#     quotestart_y = 0
+#     quotestart_x = 20
+#     mdatalength = 450
+#     mdatastart_y = 785
+#     mdatastart_x = 585
+
 
     # create the object. mode 'L' restricts to 8bit greyscale
     paintedworld = Image.new(mode='L', size=(imgsize), color=color_bg)
@@ -84,8 +118,12 @@ def TurnQuoteIntoImage(index:int, time:str, quote:str, timestring:str,
     time = time.replace(':','')
     savepath += f'quote_{time}_{imgnumber}.{imgformat}'
     savepath = path.normpath(savepath)
-    paintedworld.save(savepath)
 
+# I display my Kindle upside-down for easier charging, so I have to rotate images 180 degrees
+#    paintedworld.save(savepath)
+
+    rotatedworld = paintedworld.rotate(180)
+    rotatedworld.save(savepath)
 
 def draw_quote(drawobj, anchors:tuple, text:str, substr:str,
         font_norm:ImageFont.truetype, font_high:ImageFont.truetype):
@@ -212,8 +250,9 @@ def calc_fntsize(length:int, height:int, text:str, fntname:str, basesize=50,
         return calc_fntsize(length, height, text, fntname, basesize-5)
     return lines, fntsize
 
+# JohannesNE quotes are in Unicode
 
-def create_fnt(name:str, size:int, layout_engine=ImageFont.Layout.BASIC):
+def create_fnt(name:str, size:int, layout_engine=ImageFont.Layout.RAQM):
     # Layout.BASIC is orders of magnitude faster than RAQM but will struggle
     # with RTL languages
     # see https://github.com/python-pillow/Pillow/issues/6631
@@ -233,8 +272,15 @@ def main():
             if i >= jobs:
                 break
             else:
-                TurnQuoteIntoImage(i, row['time'],row['quote'],
-                row['timestring'], row['author'], row['title'])
+
+# Remove <br>s from JohannesNE quotes
+
+                cleanquote = row['quote'].replace('<br>', '\n')
+                cleanquote = cleanquote.replace('<br />', '\n')
+                cleanquote = cleanquote.replace('<br/>', '\n')
+                print(cleanquote)
+                TurnQuoteIntoImage(i, row['time'],cleanquote,
+                row['timestring'], row['author'], row['title'], row['safe'])
             progressbar = f'{hardworker} working.... {i+1}/{jobs}'
             print(progressbar, end='\r', flush=True)
     print("")
